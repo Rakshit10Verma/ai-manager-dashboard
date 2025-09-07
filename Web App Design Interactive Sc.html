@@ -1,0 +1,1378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Manager Companion - Advanced Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f7f8fc; 
+        }
+        .sidebar {
+            background-color: #ffffff; 
+        }
+        .light-card {
+            background-color: #ffffff;
+            border: 1px solid #e2e8f0; 
+        }
+        .page-content { 
+            display: none; 
+        }
+        .page-content.active-page {
+            display: block;
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .sidebar-item.active {
+            background-color: #eff6ff; 
+            color: #1d4ed8; 
+            font-weight: 600; 
+        }
+        .sidebar-item.active svg {
+            color: #1d4ed8; 
+        }
+        .custom-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1.5rem; 
+        }
+        .custom-table th, .custom-table td {
+            border: 1px solid #e2e8f0;
+            padding: 10px 12px; 
+            text-align: left;
+            font-size: 0.875rem; 
+        }
+        .custom-table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            color: #4a5568;
+        }
+        .custom-table tbody tr:hover {
+            background-color: #f1f5f9;
+        }
+        .form-input, .form-select { 
+            width: 100%;
+            padding: 0.5rem 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+            background-color: white; 
+        }
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.25);
+        }
+        .form-label {
+            display: block;
+            margin-bottom: 0.25rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #374151;
+        }
+        .primary-btn {
+            background-color: #2563eb;
+            color: white;
+            font-weight: 600;
+            padding: 0.625rem 1.25rem;
+            border-radius: 0.375rem;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            transition: background-color 0.15s ease-in-out;
+            border: none;
+            cursor: pointer;
+        }
+        .primary-btn:hover {
+            background-color: #1d4ed8;
+        }
+        .task-item {
+            border-left-width: 4px;
+            transition: background-color 0.2s ease;
+        }
+        .task-item.priority-high { border-left-color: #ef4444; }
+        .task-item.priority-medium { border-left-color: #f59e0b; }
+        .task-item.priority-low { border-left-color: #22c55e; }
+        .task-item.completed {
+            background-color: #f3f4f6; 
+            border-left-color: #6b7280; 
+        }
+        .task-item.completed .task-description {
+            text-decoration: line-through;
+            color: #6b7280; 
+        }
+        .task-item.overdue {
+            border-right-width: 4px;
+            border-right-color: #ef4444; 
+            background-color: #fee2e2; 
+        }
+        .task-actions button {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+            border-radius: 0.25rem;
+        }
+        .denomination-input {
+            width: 60px; 
+            text-align: right;
+        }
+        .dashboard-grid-item { /* For items in the main dashboard grid */
+            min-height: 200px; /* Ensure items have some height */
+        }
+        .schedule-table-cell {
+            min-width: 120px; /* For horizontal scroll on schedule */
+            height: 80px;
+            vertical-align: top;
+            padding: 4px;
+        }
+        .schedule-shift {
+            background-color: #e0f2fe; /* light blue */
+            border: 1px solid #7dd3fc; /* sky blue */
+            border-radius: 4px;
+            padding: 4px;
+            font-size: 0.75rem;
+            margin-bottom: 2px;
+            cursor: pointer;
+        }
+        .schedule-shift:hover {
+            background-color: #bae6fd;
+        }
+        .inventory-low-stock {
+            background-color: #fff1f2; /* Light red */
+            color: #c01A34; /* Darker red text */
+            font-weight: bold;
+        }
+
+        /* Print styles for Safe Bag Slip */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #safe-bag-slip-modal, #safe-bag-slip-modal * {
+                visibility: visible;
+            }
+            #safe-bag-slip-modal {
+                position: absolute; left: 0; top: 0; width: 100%;
+                border: none; box-shadow: none; margin: 0; padding: 10px;
+            }
+            #safe-bag-slip-modal .modal-content { box-shadow: none; border: 1px solid #ccc; }
+            #safe-bag-slip-modal h3 { font-size: 1.5rem; text-align: center; }
+            #safe-bag-slip-modal table { font-size: 1rem; width: 100%; }
+            #safe-bag-slip-modal th, #safe-bag-slip-modal td { padding: 8px; }
+            .no-print { display: none !important; }
+        }
+    </style>
+</head>
+<body class="text-gray-700">
+
+    <div class="flex h-screen">
+        <!-- Sidebar Navigation -->
+        <nav class="w-20 lg:w-64 sidebar shadow-md flex flex-col transition-all duration-300 no-print">
+            <div class="flex items-center justify-center lg:justify-start mb-10 p-4 lg:p-5 border-b border-gray-200">
+                <svg class="h-8 w-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="m9 12 2 2 4-4"/><path d="M12 6V3"/><path d="M12 21v-3"/><path d="m4.93 4.93 2.12 2.12"/><path d="m16.95 16.95 2.12 2.12"/><path d="M3 12h3"/><path d="M18 12h3"/><path d="m4.93 19.07 2.12-2.12"/><path d="m16.95 7.05 2.12-2.12"/></svg>
+                <h1 class="text-2xl font-bold text-gray-800 ml-3 hidden lg:block">AI Manager Companion</h1>
+            </div>
+            <ul class="space-y-3 px-2 lg:px-4" id="sidebar-nav">
+                <li><a href="#" data-page="dashboard" class="sidebar-item flex items-center justify-center lg:justify-start p-3 rounded-lg active"><svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg><span class="ml-4 hidden lg:inline">Dashboard</span></a></li>
+                <li><a href="#" data-page="schedule" class="sidebar-item flex items-center justify-center lg:justify-start p-3 text-gray-500 hover:bg-gray-100 hover:text-gray-800 rounded-lg transition-all"><svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/><path d="M14 14h-4v4h4z"/></svg><span class="ml-4 hidden lg:inline">Schedule</span></a></li>
+                <li><a href="#" data-page="employees" class="sidebar-item flex items-center justify-center lg:justify-start p-3 text-gray-500 hover:bg-gray-100 hover:text-gray-800 rounded-lg transition-all"><svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span class="ml-4 hidden lg:inline">Employees</span></a></li>
+                <li><a href="#" data-page="inventory" class="sidebar-item flex items-center justify-center lg:justify-start p-3 text-gray-500 hover:bg-gray-100 hover:text-gray-800 rounded-lg transition-all"><svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 9v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V9"/><path d="M20 7H4L12 3z"/></svg><span class="ml-4 hidden lg:inline">Inventory</span></a></li>
+                <li><a href="#" data-page="calculations" class="sidebar-item flex items-center justify-center lg:justify-start p-3 text-gray-500 hover:bg-gray-100 hover:text-gray-800 rounded-lg transition-all"><svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg><span class="ml-4 hidden lg:inline">Calculation & Statements</span></a></li>
+                <li><a href="#" data-page="reports" class="sidebar-item flex items-center justify-center lg:justify-start p-3 text-gray-500 hover:bg-gray-100 hover:text-gray-800 rounded-lg transition-all"><svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20V14"/></svg><span class="ml-4 hidden lg:inline">Reports</span></a></li>
+            </ul>
+            <div class="mt-auto p-2 lg:p-4">
+                <a href="#" id="logout-btn" class="sidebar-item flex items-center justify-center lg:justify-start p-3 text-gray-500 hover:bg-gray-100 hover:text-gray-800 rounded-lg transition-all"><svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" x2="12" y1="2" y2="12"/></svg><span class="ml-4 hidden lg:inline">Logout</span></a>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="flex-1 p-6 md:p-8 overflow-y-auto">
+            <div class="mx-auto"> <!-- Removed max-w-7xl for dashboard -->
+                
+                <!-- Dashboard Page -->
+                <div id="page-dashboard" class="page-content active-page fade-in">
+                    <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 px-2"> <!-- Added padding for header inside full-width -->
+                        <div>
+                            <h2 class="text-3xl font-bold text-gray-800">Welcome back, Maria!</h2>
+                            <p class="text-gray-500 mt-1 text-sm">Your comprehensive operational overview.</p>
+                        </div>
+                        <div class="text-right mt-4 md:mt-0">
+                            <div class="text-2xl font-bold text-gray-800" id="clock">--:--:--</div>
+                            <p class="text-gray-500 text-xs" id="date">----------</p>
+                        </div>
+                    </header>
+
+                    <!-- Main Dashboard Grid -->
+                    <div class="grid grid-cols-1 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+                        <!-- Column 1: AI Insights -->
+                        <div class="lg:col-span-1 xl:col-span-1 space-y-6 dashboard-grid-item">
+                            <h3 class="text-xl font-semibold text-gray-800 px-1">AI-Powered Insights</h3>
+                            <div class="light-card p-4 rounded-xl shadow-sm transform hover:-translate-y-1 transition-transform duration-300">
+                                <div class="flex items-start">
+                                    <div class="bg-yellow-100 p-3 rounded-lg mr-3"><svg class="h-5 w-5 text-yellow-600" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></div>
+                                    <div><h4 class="font-semibold text-gray-800 text-sm">Understaffing Alert</h4><p class="text-gray-500 text-xs mt-1">High sales for <span class="font-semibold text-gray-700">Fri dinner</span>.</p><button id="suggest-employee-btn" class="text-xs font-bold text-blue-600 hover:text-blue-800 mt-1.5">✨ Suggest</button></div>
+                                </div>
+                            </div>
+                            <div id="timeoff-card" class="light-card p-4 rounded-xl shadow-sm transform hover:-translate-y-1 transition-transform duration-300">
+                                <div class="flex items-start">
+                                    <div class="bg-blue-100 p-3 rounded-lg mr-3"><svg class="h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12c0 1.821.487 3.53 1.338 5L2.5 21.5l4.5-1.338A9.902 9.902 0 0 0 12 22z"/></svg></div>
+                                    <div id="timeoff-content-sm"> <h4 class="font-semibold text-gray-800 text-sm">Time-Off Request</h4><p class="text-gray-500 text-xs mt-1"><span class="font-semibold text-gray-700">John D.</span> - <span class="font-semibold text-gray-700">June 12</span>.</p><div class="mt-1.5 space-x-1.5"><button id="approve-timeoff-btn-sm" class="text-xs font-semibold bg-green-100 text-green-700 px-2 py-0.5 rounded-md hover:bg-green-200">Appr</button><button id="deny-timeoff-btn-sm" class="text-xs font-semibold bg-gray-200 text-gray-600 px-2 py-0.5 rounded-md hover:bg-gray-300">Deny</button></div></div>
+                                </div>
+                            </div>
+                             <div class="light-card p-4 rounded-xl shadow-sm transform hover:-translate-y-1 transition-transform duration-300">
+                                <div class="flex items-start">
+                                    <div class="bg-red-100 p-3 rounded-lg mr-3"><svg class="h-5 w-5 text-red-600" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6v6l4 2"/><circle cx="12" cy="12" r="10"/></svg></div>
+                                    <div><h4 class="font-semibold text-gray-800 text-sm">Overtime Alert</h4><p class="text-gray-500 text-xs mt-1"><span class="font-semibold text-gray-700">Anna S.</span> near limit.</p><button id="find-replacement-btn" class="text-xs font-bold text-blue-600 hover:text-blue-800 mt-1.5">Replace</button></div>
+                                </div>
+                            </div>
+                             <div class="light-card p-4 rounded-xl shadow-sm transform hover:-translate-y-1 transition-transform duration-300">
+                                <div class="flex items-start">
+                                    <div class="bg-purple-100 p-3 rounded-lg mr-3"><svg class="h-5 w-5 text-purple-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="currentColor" d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .2 1.3L6 11l-4 6.2c-.3.5-.3 1.1.1 1.6l.5.5c.4.3.9.4 1.3.2L6 18l8 2.2c.5.1 1-.1 1.3-.4l.5-.3c.5-.4.6-1 .4-1.5z"/></svg></div>
+                                    <div><h4 class="font-semibold text-gray-800 text-sm">Sales Opportunity</h4><p class="text-gray-500 text-xs mt-1"><span class="font-semibold">15 flights</span> in 3 hrs.</p><button id="plan-special-btn" class="text-xs font-bold text-blue-600 hover:text-blue-800 mt-1.5">✨ Plan</button></div>
+                                </div>
+                            </div>
+                            <div class="light-card p-4 rounded-xl shadow-sm">
+                                <h4 class="font-semibold text-gray-800 text-sm mb-2">Team Mood (Today)</h4>
+                                <div class="flex items-center justify-around text-2xl">
+                                    <span>😊</span> <!-- Placeholder -->
+                                    <span class="text-green-500 font-bold">85%</span>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-1 text-center">Based on optional end-of-shift feedback.</p>
+                            </div>
+                        </div>
+
+                        <!-- Column 2: Manager's Task List -->
+                        <div class="lg:col-span-2 xl:col-span-2 light-card p-6 rounded-xl shadow-sm dashboard-grid-item flex flex-col">
+                            <h3 class="text-xl font-semibold text-gray-800 mb-4">Manager's Task List</h3>
+                            <form id="add-task-form" class="grid grid-cols-1 sm:grid-cols-6 gap-3 mb-4 items-end">
+                                <div class="sm:col-span-3">
+                                    <label for="task-description" class="form-label text-xs">New Task</label>
+                                    <input type="text" id="task-description" class="form-input text-sm py-1.5" placeholder="e.g., Finalize Q3 budget">
+                                </div>
+                                <div class="sm:col-span-1">
+                                    <label for="task-due-date" class="form-label text-xs">Due</label>
+                                    <input type="date" id="task-due-date" class="form-input text-sm py-1.5">
+                                </div>
+                                <div class="sm:col-span-1">
+                                    <label for="task-priority" class="form-label text-xs">Priority</label>
+                                    <select id="task-priority" class="form-select text-sm py-1.5">
+                                        <option value="low">Low</option>
+                                        <option value="medium" selected>Med</option>
+                                        <option value="high">High</option>
+                                    </select>
+                                </div>
+                                <div class="sm:col-span-1">
+                                    <button type="submit" class="primary-btn w-full text-sm py-1.5">Add</button>
+                                </div>
+                            </form>
+                            <div class="flex justify-between items-center mb-2">
+                                <h4 class="text-sm font-medium text-gray-700">Current Tasks (<span id="task-count">0</span>)</h4>
+                                <select id="filter-tasks" class="form-select text-xs py-1 px-2 w-auto">
+                                    <option value="all">All</option>
+                                    <option value="pending">Pending</option>
+                                    <option value="completed">Done</option>
+                                    <option value="overdue">Overdue</option>
+                                </select>
+                            </div>
+                            <div id="manager-task-list" class="space-y-2 flex-grow overflow-y-auto pr-1">
+                                <p class="text-gray-500 text-xs italic">No tasks yet.</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Column 3: Key Metrics, Quick Actions, Shift Quick View -->
+                        <div class="lg:col-span-1 xl:col-span-1 space-y-6 dashboard-grid-item">
+                            <div class="light-card p-4 rounded-xl shadow-sm">
+                                <h3 class="text-md font-semibold text-gray-800 mb-3">Key Metrics</h3>
+                                <div class="space-y-3">
+                                   <div class="flex items-center">
+                                        <div class="relative w-12 h-12 mr-2"> <!-- Smaller KPI rings -->
+                                            <svg class="w-full h-full" viewBox="0 0 36 36"><path class="text-gray-200" d="M18 2.0845a 15.9155 15.9155 0 0 1 0 31.831a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-width="3.8" /><path class="progress-ring__circle text-yellow-500" d="M18 2.0845a 15.9155 15.9155 0 0 1 0 31.831a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-width="3.8" stroke-dasharray="75, 100" stroke-linecap="round"/></svg>
+                                            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-sm font-semibold text-gray-700">75%</div>
+                                        </div>
+                                        <div><h4 class="font-medium text-gray-600 text-xs">Labor Cost</h4><p class="text-md font-bold text-gray-800">$8,450</p></div>
+                                   </div>
+                                   <div class="flex items-center">
+                                        <div class="relative w-12 h-12 mr-2">
+                                            <svg class="w-full h-full" viewBox="0 0 36 36"><path class="text-gray-200" d="M18 2.0845a 15.9155 15.9155 0 0 1 0 31.831a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-width="3.8" /><path class="progress-ring__circle text-blue-600" d="M18 2.0845a 15.9155 15.9155 0 0 1 0 31.831a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-width="3.8" stroke-dasharray="83, 100" stroke-linecap="round"/></svg>
+                                            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-sm font-semibold text-gray-700">83%</div>
+                                        </div>
+                                        <div><h4 class="font-medium text-gray-600 text-xs">Hours Scheduled</h4><p class="text-md font-bold text-gray-800">350 hrs</p></div>
+                                   </div>
+                                </div>
+                            </div>
+                             <div class="light-card p-4 rounded-xl shadow-sm">
+                                <h3 class="text-md font-semibold text-gray-800 mb-3">Quick Actions</h3>
+                                <div class="space-y-2">
+                                     <button id="create-schedule-btn" class="w-full primary-btn text-xs py-2 flex items-center justify-center">
+                                        <svg class="h-4 w-4 mr-1.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M5.75 3A2.25 2.25 0 003.5 5.25v9.5A2.25 2.25 0 005.75 17h8.5A2.25 2.25 0 0016.5 14.75V8.91l-2.522 2.522a.75.75 0 01-1.06-1.06L15.44 7.852A2.233 2.233 0 0014.75 3H5.75zm3.75 5a.75.75 0 000 1.5h4a.75.75 0 000-1.5h-4zM9 11.5a.75.75 0 01.75-.75h1.5a.75.75 0 010 1.5h-1.5a.75.75 0 01-.75-.75z"/></svg>
+                                        Create Schedule
+                                    </button>
+                                    <button id="draft-announcement-btn" class="w-full bg-blue-600 text-white font-semibold py-2 rounded-lg shadow-sm hover:bg-blue-700 transition-all text-xs">✨ Draft Announcement</button>
+                                </div>
+                            </div>
+                            <div class="light-card p-4 rounded-xl shadow-sm">
+                                <h3 class="text-md font-semibold text-gray-800 mb-2">Shift Quick View</h3>
+                                <div class="text-xs space-y-1.5">
+                                    <p><strong>On Next (14:00):</strong> A. Johnson (S), R. Brown (B)</p>
+                                    <p><strong>Upcoming Break:</strong> M. Wilson (15:00)</p>
+                                    <p><strong>Closing Tonight:</strong> J. Walker, S. Lee</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Column 4 & 5 (or merged for lg): Sales, Top Items, Schedule Overview -->
+                        <div class="lg:col-span-4 xl:col-span-2 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-1 gap-6 dashboard-grid-item">
+                            <div class="light-card p-4 rounded-xl shadow-sm md:col-span-1 xl:col-span-1">
+                                <h3 class="text-md font-semibold text-gray-800 mb-2">Today's Sales Trend</h3>
+                                <div class="h-40 bg-gray-200 rounded-md flex items-center justify-center text-gray-500 text-sm">
+                                    Sales Line Chart
+                                </div>
+                            </div>
+                            <div class="light-card p-4 rounded-xl shadow-sm md:col-span-1 xl:col-span-1">
+                                <h3 class="text-md font-semibold text-gray-800 mb-2">Top Selling Items</h3>
+                                <ul id="top-items-list-sm" class="space-y-1 text-xs max-h-40 overflow-y-auto">
+                                    <li class="flex justify-between p-1 bg-gray-50 rounded"><span>Classic Burger</span> <span class="font-semibold">45</span></li>
+                                    <li class="flex justify-between p-1 rounded"><span>Caesar Salad</span> <span class="font-semibold">32</span></li>
+                                    <li class="flex justify-between p-1 bg-gray-50 rounded"><span>Fries</span> <span class="font-semibold">28</span></li>
+                                    <li class="flex justify-between p-1 rounded"><span>Wings</span> <span class="font-semibold">25</span></li>
+                                    <li class="flex justify-between p-1 bg-gray-50 rounded"><span>Iced Tea</span> <span class="font-semibold">22</span></li>
+                                </ul>
+                            </div>
+                             <div class="light-card p-4 rounded-xl shadow-sm md:col-span-2 xl:col-span-1">
+                                <h3 class="text-md font-semibold text-gray-800 mb-2">This Week's Schedule</h3>
+                                <div class="flex items-center justify-between text-xs mb-1">
+                                     <button id="prev-week-btn-sm" class="p-1 rounded-full hover:bg-gray-100"><svg class="h-3 w-3 text-gray-500" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
+                                    <span id="schedule-date-range-sm" class="font-medium text-gray-600">June 9 - 15</span>
+                                    <button id="next-week-btn-sm" class="p-1 rounded-full hover:bg-gray-100"><svg class="h-3 w-3 text-gray-500" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
+                                </div>
+                                <div class="grid grid-cols-7 gap-1 text-center text-xs" id="calendar-grid-sm">
+                                    <div class="font-semibold text-gray-400 text-[0.6rem]">MON</div> <div class="font-semibold text-gray-400 text-[0.6rem]">TUE</div> <div class="font-semibold text-gray-400 text-[0.6rem]">WED</div> <div class="font-semibold text-gray-400 text-[0.6rem]">THU</div> <div class="font-semibold text-gray-400 text-[0.6rem]">FRI</div> <div class="font-semibold text-blue-500 text-[0.6rem]">SAT</div> <div class="font-semibold text-gray-400 text-[0.6rem]">SUN</div>
+                                    <div class="bg-gray-100 rounded h-10 p-1 text-left text-xs font-bold text-gray-600">9</div>
+                                    <div class="bg-gray-100 rounded h-10 p-1 text-left text-xs font-bold text-gray-600">10</div>
+                                    <div class="bg-gray-100 rounded h-10 p-1 text-left text-xs font-bold text-gray-600">11</div>
+                                    <div class="bg-gray-100 rounded h-10 p-1 text-left text-xs font-bold text-gray-600">12</div>
+                                    <div class="bg-gray-100 rounded h-10 p-1 text-left text-xs font-bold text-gray-600">13</div>
+                                    <div class="bg-blue-50 rounded h-10 p-1 text-left text-xs font-bold text-blue-600 border border-blue-400">14</div>
+                                    <div class="bg-gray-100 rounded h-10 p-1 text-left text-xs font-bold text-gray-600">15</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Schedule Page -->
+                <div id="page-schedule" class="page-content max-w-7xl mx-auto"> <!-- Added max-width back for non-dashboard pages -->
+                     <header class="flex flex-col md:flex-row justify-between items-center mb-6">
+                        <div>
+                            <h2 class="text-3xl font-bold text-gray-800">Team Schedule</h2>
+                            <p class="text-gray-500 mt-1 text-sm">Plan, assign, and publish shifts efficiently.</p>
+                        </div>
+                        <div class="mt-4 md:mt-0 space-x-2">
+                            <button onclick="alert('Add Shift form would open here.')" class="primary-btn text-sm flex items-center">
+                                <svg class="h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" /></svg>
+                                Add Shift
+                            </button>
+                             <button onclick="alert('Schedule Published!')" class="bg-green-500 text-white font-semibold py-2.5 px-5 rounded-lg shadow-sm hover:bg-green-600 transition-all text-sm">Publish Schedule</button>
+                        </div>
+                    </header>
+
+                    <div class="light-card p-6 rounded-xl shadow-sm mb-6">
+                        <div class="flex flex-wrap justify-between items-center mb-4 gap-4">
+                            <div>
+                                <span class="text-lg font-semibold text-gray-700 mr-4" id="schedule-page-date-range">June 9 - June 15, 2024</span>
+                                <button id="schedule-prev-week" class="p-2 rounded-full hover:bg-gray-200"><svg class="h-4 w-4 text-gray-600"  viewBox="0 0 20 20" fill="currentColor"> <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd"/></svg></button>
+                                <button id="schedule-next-week" class="p-2 rounded-full hover:bg-gray-200"><svg class="h-4 w-4 text-gray-600" viewBox="0 0 20 20" fill="currentColor"> <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/></svg></button>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <select id="schedule-employee-filter" class="form-select text-sm py-1.5 w-auto">
+                                    <option value="all">All Employees</option>
+                                    <!-- Populated by JS -->
+                                </select>
+                                <button id="view-day-btn" class="text-sm px-3 py-1.5 border rounded-md hover:bg-gray-100">Day</button>
+                                <button id="view-week-btn" class="text-sm px-3 py-1.5 border rounded-md bg-blue-100 text-blue-700 font-semibold">Week</button>
+                                <button id="view-month-btn" class="text-sm px-3 py-1.5 border rounded-md hover:bg-gray-100">Month</button>
+                            </div>
+                        </div>
+                        
+                        <div class="overflow-x-auto">
+                            <table class="custom-table min-w-max" id="full-schedule-table">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="sticky left-0 bg-gray-50 z-10 w-40">Employee / Role</th>
+                                        <!-- Days will be populated by JS -->
+                                    </tr>
+                                </thead>
+                                <tbody id="full-schedule-body" class="bg-white divide-y divide-gray-200 text-sm">
+                                    <!-- Schedule rows will be populated by JS -->
+                                    <tr><td colspan="8" class="text-center py-10">Loading schedule...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="light-card p-4 rounded-xl shadow-sm">
+                            <h4 class="font-semibold text-gray-700 mb-2">Unassigned Shifts (<span id="unassigned-count">3</span>)</h4>
+                            <div class="space-y-2 text-xs max-h-40 overflow-y-auto">
+                                <div class="p-2 bg-yellow-50 border border-yellow-200 rounded">Fri, Jun 13: Server (5pm-Close) <button onclick="alert('AI Suggestion for Server shift')" class="text-blue-600 text-xs ml-1">✨Assign</button></div>
+                                <div class="p-2 bg-yellow-50 border border-yellow-200 rounded">Sat, Jun 14: Cook (8am-4pm) <button onclick="alert('AI Suggestion for Cook shift')" class="text-blue-600 text-xs ml-1">✨Assign</button></div>
+                                <div class="p-2 bg-yellow-50 border border-yellow-200 rounded">Sun, Jun 15: Host (10am-2pm) <button onclick="alert('AI Suggestion for Host shift')" class="text-blue-600 text-xs ml-1">✨Assign</button></div>
+                            </div>
+                        </div>
+                        <div class="light-card p-4 rounded-xl shadow-sm">
+                            <h4 class="font-semibold text-gray-700 mb-2">Schedule Actions</h4>
+                             <div class="space-y-2">
+                                <button onclick="alert('Copying previous week schedule template...')" class="w-full text-sm bg-gray-200 hover:bg-gray-300 text-gray-700 py-2 rounded-md">Copy Previous Week</button>
+                                <button onclick="confirm('Are you sure you want to clear all shifts for this week?') && alert('Current week shifts cleared.')" class="w-full text-sm bg-red-100 hover:bg-red-200 text-red-700 py-2 rounded-md">Clear This Week</button>
+                             </div>
+                        </div>
+                         <div class="light-card p-4 rounded-xl shadow-sm">
+                            <h4 class="font-semibold text-gray-700 mb-2">Availability Notes</h4>
+                            <div class="text-xs space-y-1">
+                                <p><span class="font-semibold">L. Green:</span> Unavailable Sat AM</p>
+                                <p><span class="font-semibold">P. Evans:</span> Prefers evenings</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Employees Page -->
+                <div id="page-employees" class="page-content max-w-7xl mx-auto">
+                    <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
+                        <div>
+                            <h2 class="text-3xl font-bold text-gray-800">Employee Management</h2>
+                            <p class="text-gray-500 mt-1 text-sm">View, add, and manage your team members.</p>
+                        </div>
+                        <button onclick="alert('Add New Employee form would appear here.')" class="mt-4 md:mt-0 primary-btn text-sm flex items-center">
+                             <svg class="h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M8 9a3 3 0 100-6 3 3 0 000 6zM8 11a6 6 0 016 6H2a6 6 0 016-6zM16 11a1 1 0 10-2 0v1h-1a1 1 0 100 2h1v1a1 1 0 102 0v-1h1a1 1 0 100-2h-1v-1z" /></svg>
+                            Add New Employee
+                        </button>
+                    </header>
+                    <div class="light-card p-6 rounded-xl shadow-sm">
+                        <div class="mb-4">
+                            <input type="text" id="employee-search-main" placeholder="Search employees by name or role..." class="form-input md:w-1/2">
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="custom-table" id="employees-table-main">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Role</th>
+                                        <th>Email</th>
+                                        <th>Status</th>
+                                        <th>Hours (Period)</th>
+                                        <th>Max Hours</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="employees-table-body-main">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Inventory Page -->
+                <div id="page-inventory" class="page-content max-w-7xl mx-auto">
+                    <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
+                        <div>
+                            <h2 class="text-3xl font-bold text-gray-800">Inventory Management</h2>
+                            <p class="text-gray-500 mt-1 text-sm">Track stock levels, manage orders, and reduce waste.</p>
+                        </div>
+                        <div class="mt-4 md:mt-0 space-x-2">
+                             <button onclick="alert('Add New Item form would open.')" class="primary-btn text-sm">Add New Item</button>
+                             <button onclick="alert('Receive Stock form would open.')" class="bg-green-500 text-white font-semibold py-2.5 px-5 rounded-lg shadow-sm hover:bg-green-600 transition-all text-sm">Receive Stock</button>
+                        </div>
+                    </header>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                        <div class="light-card p-4 rounded-xl shadow-sm text-center">
+                            <p class="text-sm text-gray-500">Total Inventory Value</p>
+                            <p class="text-2xl font-bold text-gray-800" id="total-inventory-value">$12,345.67</p>
+                        </div>
+                        <div class="light-card p-4 rounded-xl shadow-sm text-center">
+                            <p class="text-sm text-gray-500">Items Low in Stock</p>
+                            <p class="text-2xl font-bold text-red-600" id="low-stock-count">5</p>
+                        </div>
+                        <div class="light-card p-4 rounded-xl shadow-sm text-center">
+                            <p class="text-sm text-gray-500">Most Used Item (Month)</p>
+                            <p class="text-xl font-bold text-gray-800" id="most-used-item">Burger Buns</p>
+                        </div>
+                    </div>
+                    
+                    <div class="light-card p-6 rounded-xl shadow-sm">
+                        <div class="flex flex-wrap justify-between items-center mb-4 gap-3">
+                            <input type="text" id="inventory-search" placeholder="Search inventory items..." class="form-input md:w-1/3">
+                            <div class="space-x-1">
+                                <button class="text-xs px-2.5 py-1 border rounded-md hover:bg-gray-100 bg-gray-50" data-category="all">All</button>
+                                <button class="text-xs px-2.5 py-1 border rounded-md hover:bg-gray-100" data-category="Food">Food</button>
+                                <button class="text-xs px-2.5 py-1 border rounded-md hover:bg-gray-100" data-category="Beverage">Beverage</button>
+                                <button class="text-xs px-2.5 py-1 border rounded-md hover:bg-gray-100" data-category="Supplies">Supplies</button>
+                            </div>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="custom-table" id="inventory-table">
+                                <thead>
+                                    <tr>
+                                        <th>Item Name</th>
+                                        <th>Category</th>
+                                        <th>Current Stock</th>
+                                        <th>Unit</th>
+                                        <th>Reorder Level</th>
+                                        <th>Supplier</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="inventory-table-body">
+                                    <!-- Inventory items will be populated by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+
+                <!-- Calculation and Statements Page -->
+                <div id="page-calculations" class="page-content max-w-7xl mx-auto">
+                    <header class="mb-8">
+                        <h2 class="text-3xl font-bold text-gray-800">Cashier Reconciliation & Deposits</h2>
+                        <p class="text-gray-500 mt-1 text-sm">Reconcile tills and manage safe bag deposits.</p>
+                    </header>
+                    <div class="grid grid-cols-1 lg:grid-cols-1 gap-8"> 
+                        <section class="light-card p-6 rounded-xl shadow-sm">
+                            <h3 class="text-xl font-semibold text-gray-800 mb-4">Employee Till Reconciliation</h3>
+                            <form id="till-calculation-form" class="space-y-4">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+                                    <div>
+                                        <label for="till-employee" class="form-label">Employee</label>
+                                        <select id="till-employee" class="form-input">
+                                            <option value="">Select Employee</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label for="starting-cash" class="form-label">Starting Cash in Till ($)</label>
+                                        <input type="number" id="starting-cash" class="form-input" placeholder="e.g., 150.00" step="0.01" value="150.00" required>
+                                    </div>
+                                    <div>
+                                        <label for="system-expected-cash" class="form-label">System Expected Net Cash Sales (from POS) ($)</label>
+                                        <input type="number" id="system-expected-cash" class="form-input" placeholder="e.g., 525.50" step="0.01" value="525.50" required>
+                                        <p class="text-xs text-gray-500 mt-1">This amount should come from your POS report for the shift.</p>
+                                    </div>
+                                </div>
+
+                                <hr class="my-6">
+                                <h4 class="text-lg font-semibold text-gray-700">Cash Denomination Count:</h4>
+                                <div id="denomination-counter" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-x-4 gap-y-3 items-center text-sm">
+                                </div>
+                                <div class="mt-2 text-right">
+                                    <label class="form-label inline-block mr-2">Total Cash Counted:</label>
+                                    <span id="total-cash-counted-display" class="font-bold text-lg">$0.00</span>
+                                    <input type="hidden" id="total-cash-counted-value" value="0">
+                                </div>
+                                
+                                <hr class="my-6">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+                                    <div>
+                                        <label for="vouchers-accepted" class="form-label">Total Vouchers Accepted ($)</label>
+                                        <input type="number" id="vouchers-accepted" class="form-input" placeholder="0.00" step="0.01" value="0">
+                                    </div>
+                                    <div>
+                                        <label for="cash-refunds" class="form-label">Total Cash Refunds/Cancellations ($)</label>
+                                        <input type="number" id="cash-refunds" class="form-input" placeholder="0.00" step="0.01" value="0">
+                                    </div>
+                                    <div class="md:col-span-2">
+                                        <label for="refund-reasons" class="form-label">Reasons for Refunds/Cancellations (Optional)</label>
+                                        <textarea id="refund-reasons" class="form-input h-20" placeholder="Briefly explain any refunds..."></textarea>
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-6">
+                                    <button type="submit" class="primary-btn w-full md:w-auto">Calculate, Record & Prepare Safe Bag Slip</button>
+                                </div>
+                            </form>
+                            <div id="till-result" class="mt-6 p-4 rounded-md text-sm border"></div>
+                        </section>
+
+                        <section class="light-card p-6 rounded-xl shadow-sm mt-8">
+                             <div class="flex justify-between items-center mb-4">
+                                <h3 class="text-xl font-semibold text-gray-800">Safe Bag Deposit Log</h3>
+                                <button id="add-manual-safe-bag-btn" class="primary-btn text-sm">Log Manual Drop</button>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="custom-table">
+                                    <thead>
+                                        <tr><th>Date</th><th>Time</th><th>Employee</th><th>Bag #</th><th>Amount ($)</th><th>Witness</th><th>Status</th></tr>
+                                    </thead>
+                                    <tbody id="safe-bags-table-body">
+                                        <tr><td colspan="7" class="text-center text-gray-500 py-4">No safe bag drops recorded yet.</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </section>
+                    </div>
+                </div>
+
+                <!-- Reports Page -->
+                <div id="page-reports" class="page-content max-w-7xl mx-auto">
+                     <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
+                        <div>
+                            <h2 class="text-3xl font-bold text-gray-800">Analytics & Reports</h2>
+                            <p class="text-gray-500 mt-1 text-sm">Gain insights into your operations.</p>
+                        </div>
+                        <div class="mt-4 md:mt-0">
+                             <input type="date" value="2024-06-01" class="text-sm p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                             <span class="mx-2">to</span>
+                             <input type="date" value="2024-06-30" class="text-sm p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                             <button onclick="alert('Generating reports for selected date range.')" class="ml-2 primary-btn text-sm">Apply</button>
+                        </div>
+                    </header>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="light-card p-6 rounded-xl shadow-sm">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-3">Labor Cost Analysis</h3>
+                            <p class="text-gray-600 text-sm mb-1">Total Labor Cost: <span class="font-bold text-xl">$25,750</span></p>
+                            <p class="text-gray-600 text-sm mb-1">Labor as % of Sales: <span class="font-bold text-xl">28%</span></p>
+                            <p class="text-gray-600 text-sm mb-4">Overtime Hours: <span class="font-bold text-xl">45 hrs</span></p>
+                            <div class="h-40 bg-gray-200 rounded-md flex items-center justify-center text-gray-500">Placeholder Chart: Labor Cost Trend</div>
+                             <button onclick="alert('Downloading Labor Cost Report')" class="mt-4 text-sm text-blue-600 hover:text-blue-800 font-semibold">Download Full Report</button>
+                        </div>
+                         <div class="light-card p-6 rounded-xl shadow-sm">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-3">Sales Performance</h3>
+                            <p class="text-gray-600 text-sm mb-1">Total Sales: <span class="font-bold text-xl">$92,000</span></p>
+                            <p class="text-gray-600 text-sm mb-1">Average Check: <span class="font-bold text-xl">$45.50</span></p>
+                            <p class="text-gray-600 text-sm mb-4">Top Performing Day: <span class="font-bold text-xl">Saturday</span></p>
+                            <div class="h-40 bg-gray-200 rounded-md flex items-center justify-center text-gray-500">Placeholder Chart: Sales by Day</div>
+                             <button onclick="alert('Downloading Sales Performance Report')" class="mt-4 text-sm text-blue-600 hover:text-blue-800 font-semibold">Download Full Report</button>
+                        </div>
+                    </div>
+                </div>
+
+            </div> 
+        </main>
+    </div>
+
+    <!-- Announcement Modal -->
+    <div id="announcement-modal" class="modal-overlay no-print">
+        <div class="modal-content bg-white p-6 rounded-lg shadow-xl fade-in w-full max-w-lg">
+            <div class="flex justify-between items-center mb-4"><h3 class="text-xl font-semibold text-gray-800">Draft Announcement</h3><button id="close-modal-btn" class="text-gray-400 hover:text-gray-700"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button></div>
+            <div><textarea id="announcement-text" class="w-full h-40 p-3 border border-gray-300 rounded-md bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm" placeholder="Generating announcement..."></textarea></div>
+            <div class="mt-5 flex justify-end space-x-3">
+                 <button id="copy-text-btn" class="font-semibold text-gray-600 hover:text-gray-800 py-2 px-4 rounded-md text-sm">Copy Text</button>
+                 <button id="send-to-team-btn" class="primary-btn text-sm">Send to Team</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Safe Bag Slip Modal -->
+    <div id="safe-bag-slip-modal" class="modal-overlay">
+        <div class="modal-content bg-white p-8 rounded-lg shadow-xl w-full max-w-md text-gray-800">
+            <div class="text-center mb-6">
+                <h3 class="text-2xl font-bold">Safe Bag Deposit Slip</h3>
+                <p class="text-sm text-gray-600" id="slip-restaurant-name">AI Manager Companion Restaurant</p>
+            </div>
+            <div class="space-y-2 text-sm mb-6">
+                <p><strong>Date:</strong> <span id="slip-date"></span></p>
+                <p><strong>Time:</strong> <span id="slip-time"></span></p>
+                <p><strong>Employee:</strong> <span id="slip-employee-name"></span></p>
+                <p><strong>Safe Bag Number:</strong> <span id="slip-bag-number" class="font-semibold"></span></p>
+            </div>
+            <h4 class="font-semibold mb-2 text-md">Cash Denominations in Bag:</h4>
+            <table class="custom-table text-sm mb-2" id="slip-denominations-table">
+                <thead><tr><th>Denomination</th><th>Count</th><th>Amount</th></tr></thead>
+                <tbody></tbody>
+            </table>
+             <div id="slip-refund-notes" class="text-xs text-gray-600 mt-1 mb-4 border-t pt-2"></div>
+
+            <div class="text-right mb-8">
+                <p class="text-lg">Total Amount in Bag: <strong class="text-xl" id="slip-total-amount"></strong></p>
+            </div>
+            <div class="grid grid-cols-2 gap-8 mt-10 pt-8 border-t border-gray-300">
+                <div class="text-center">
+                    <div class="w-full h-16 border-b border-gray-400 mb-1"></div>
+                    <p class="text-xs">Employee Signature</p>
+                </div>
+                <div class="text-center">
+                     <div class="w-full h-16 border-b border-gray-400 mb-1 flex items-center justify-center text-gray-400 italic">(Restaurant Stamp / Manager Sign)</div>
+                    <p class="text-xs">Manager/Witness Signature</p>
+                </div>
+            </div>
+            <div class="mt-8 flex justify-end space-x-3 no-print">
+                 <button id="close-slip-modal-btn" class="font-semibold text-gray-600 hover:text-gray-800 py-2 px-4 rounded-md text-sm">Close</button>
+                 <button id="print-slip-btn" class="primary-btn text-sm">Print Slip</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Sample Data ---
+        const employeesData = [
+            { id: 1, name: "Maria Rodriguez", role: "Manager", email: "maria.r@example.com", status: "Full-Time", hoursThisPeriod: 135, maxHours: 140 }, { id: 2, name: "John Smith", role: "Head Chef", email: "john.s@example.com", status: "Full-Time", hoursThisPeriod: 138, maxHours: 140 }, { id: 3, name: "Alice Johnson", role: "Lead Server", email: "alice.j@example.com", status: "Full-Time", hoursThisPeriod: 120, maxHours: 140 }, { id: 4, name: "Robert Brown", role: "Bartender", email: "robert.b@example.com", status: "Full-Time", hoursThisPeriod: 130, maxHours: 140 }, { id: 5, name: "Emily Davis", role: "Sous Chef", email: "emily.d@example.com", status: "Full-Time", hoursThisPeriod: 132, maxHours: 140 }, { id: 6, name: "Michael Wilson", role: "Server", email: "michael.w@example.com", status: "Full-Time", hoursThisPeriod: 115, maxHours: 140 }, { id: 7, name: "Jessica Garcia", role: "Hostess", email: "jessica.g@example.com", status: "Full-Time", hoursThisPeriod: 125, maxHours: 140 }, { id: 8, name: "David Martinez", role: "Cook", email: "david.m@example.com", status: "Full-Time", hoursThisPeriod: 133, maxHours: 140 }, { id: 9, name: "Sarah Lee", role: "Server", email: "sarah.l@example.com", status: "Full-Time", hoursThisPeriod: 118, maxHours: 140 }, { id: 10, name: "Kevin Hernandez", role: "Dishwasher", email: "kevin.h@example.com", status: "Full-Time", hoursThisPeriod: 139, maxHours: 140 }, { id: 11, name: "Linda Green", role: "Pastry Chef", email: "linda.g@example.com", status: "Full-Time", hoursThisPeriod: 128, maxHours: 140 }, { id: 12, name: "James Walker", role: "Bartender", email: "james.w@example.com", status: "Full-Time", hoursThisPeriod: 122, maxHours: 140 },
+            { id: 13, name: "Karen Young", role: "Server", email: "karen.y@example.com", status: "Part-Time", hoursThisPeriod: 65, maxHours: 80 }, { id: 14, name: "Chris King", role: "Cook", email: "chris.k@example.com", status: "Part-Time", hoursThisPeriod: 70, maxHours: 80 }, { id: 15, name: "Patricia Scott", role: "Hostess", email: "patricia.s@example.com", status: "Part-Time", hoursThisPeriod: 55, maxHours: 80 }, { id: 16, name: "Daniel Adams", role: "Busser", email: "daniel.a@example.com", status: "Part-Time", hoursThisPeriod: 75, maxHours: 80 }, { id: 17, name: "Nancy Baker", role: "Server", email: "nancy.b@example.com", status: "Part-Time", hoursThisPeriod: 60, maxHours: 80 }, { id: 18, name: "Paul Evans", role: "Dishwasher", email: "paul.e@example.com", status: "Part-Time", hoursThisPeriod: 72, maxHours: 80 }, { id: 19, name: "Laura Hall", role: "Barback", email: "laura.h@example.com", status: "Part-Time", hoursThisPeriod: 50, maxHours: 80 }, { id: 20, name: "Mark Allen", role: "Cook", email: "mark.a@example.com", status: "Part-Time", hoursThisPeriod: 68, maxHours: 80 }
+        ];
+        const inventoryData = [
+            { id: 1, name: "Burger Buns", category: "Food", stock: 120, unit: "pieces", reorder: 50, supplier: "Bakery Co." },
+            { id: 2, name: "Beef Patties", category: "Food", stock: 80, unit: "kg", reorder: 20, supplier: "Meat Supplier Inc." },
+            { id: 3, name: "Cheddar Cheese", category: "Food", stock: 15, unit: "kg", reorder: 5, supplier: "Dairy Farms" },
+            { id: 4, name: "Lettuce", category: "Food", stock: 5, unit: "heads", reorder: 3, supplier: "Fresh Veggies Ltd." },
+            { id: 5, name: "Tomatoes", category: "Food", stock: 20, unit: "kg", reorder: 10, supplier: "Fresh Veggies Ltd." },
+            { id: 6, name: "Cola", category: "Beverage", stock: 5, unit: "cases (24)", reorder: 10, supplier: "Drink Corp." },
+            { id: 7, name: "Napkins", category: "Supplies", stock: 500, unit: "pack", reorder: 200, supplier: "Supply King" },
+            { id: 8, name: "Coffee Beans", category: "Beverage", stock: 8, unit: "kg", reorder: 5, supplier: "Roast Masters" },
+            { id: 9, name: "Cleaning Spray", category: "Supplies", stock: 3, unit: "bottles", reorder: 2, supplier: "CleanPro" },
+        ];
+
+        let recentTillsData = JSON.parse(localStorage.getItem('recentTillsAMC')) || [];
+        let safeBagsData = JSON.parse(localStorage.getItem('safeBagsAMC')) || [];
+        let managerTasks = []; 
+
+        const denominations = [
+            { value: 100, label: '$100 Bills', type: 'note' }, { value: 50, label: '$50 Bills', type: 'note' },
+            { value: 20, label: '$20 Bills', type: 'note' }, { value: 10, label: '$10 Bills', type: 'note' },
+            { value: 5, label: '$5 Bills', type: 'note' }, { value: 1, label: '$1 Bills', type: 'note' },
+            { value: 0.25, label: 'Quarters (25¢)', type: 'coin' }, { value: 0.10, label: 'Dimes (10¢)', type: 'coin' },
+            { value: 0.05, label: 'Nickels (5¢)', type: 'coin' }, { value: 0.01, label: 'Pennies (1¢)', type: 'coin' }
+        ];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- Clock ---
+            const clockElement = document.getElementById('clock');
+            const dateElement = document.getElementById('date');
+
+            function updateClock() {
+                const now = new Date();
+                const hours = String(now.getHours()).padStart(2, '0');
+                const minutes = String(now.getMinutes()).padStart(2, '0');
+                const seconds = String(now.getSeconds()).padStart(2, '0');
+                if (clockElement) clockElement.textContent = `${hours}:${minutes}:${seconds}`;
+                
+                const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+                if (dateElement) dateElement.textContent = now.toLocaleDateString('en-US', options);
+            }
+            if (clockElement && dateElement) {
+                setInterval(updateClock, 1000);
+                updateClock();
+            }
+
+            // --- Page Content Elements ---
+            const pageContents = {
+                dashboard: document.getElementById('page-dashboard'),
+                schedule: document.getElementById('page-schedule'),
+                employees: document.getElementById('page-employees'),
+                inventory: document.getElementById('page-inventory'),
+                calculations: document.getElementById('page-calculations'),
+                reports: document.getElementById('page-reports'),
+            };
+
+            // --- Sidebar Navigation & Page Switching ---
+            const sidebarNav = document.getElementById('sidebar-nav');
+            const sidebarItems = sidebarNav.querySelectorAll('.sidebar-item');
+            const logoutBtn = document.getElementById('logout-btn');
+
+            function showPage(pageId) {
+                Object.values(pageContents).forEach(page => {
+                    if (page) {
+                        page.classList.remove('active-page', 'fade-in');
+                        page.style.display = 'none'; 
+                    }
+                });
+                // Adjust main content padding based on page
+                const mainContentArea = document.querySelector('main > div');
+                if (pageId === 'dashboard') {
+                    mainContentArea.classList.remove('max-w-7xl');
+                } else {
+                    mainContentArea.classList.add('max-w-7xl');
+                }
+
+                if (pageContents[pageId]) {
+                    pageContents[pageId].style.display = 'block'; 
+                    void pageContents[pageId].offsetWidth; 
+                    pageContents[pageId].classList.add('active-page', 'fade-in');
+                }
+            }
+            
+            function setActiveSidebarItem(selectedItem) {
+                 sidebarItems.forEach(i => {
+                    i.classList.remove('active', 'bg-blue-50', 'text-blue-700', 'font-semibold');
+                    i.classList.add('text-gray-500'); 
+                    const svg = i.querySelector('svg');
+                    if (svg) {
+                        svg.classList.remove('text-blue-700');
+                        svg.classList.add('text-gray-500');
+                    }
+                });
+                if (logoutBtn && selectedItem !== logoutBtn) { 
+                     logoutBtn.classList.remove('active', 'bg-blue-50', 'text-blue-700', 'font-semibold');
+                     logoutBtn.classList.add('text-gray-500');
+                     const logoutSvg = logoutBtn.querySelector('svg');
+                     if(logoutSvg) {
+                        logoutSvg.classList.remove('text-blue-700');
+                        logoutSvg.classList.add('text-gray-500');
+                     }
+                }
+
+                if (selectedItem && selectedItem !== logoutBtn) { 
+                    selectedItem.classList.add('active', 'bg-blue-50', 'text-blue-700', 'font-semibold');
+                    selectedItem.classList.remove('text-gray-500');
+                    const svg = selectedItem.querySelector('svg');
+                     if (svg) {
+                        svg.classList.add('text-blue-700');
+                        svg.classList.remove('text-gray-500');
+                    }
+                }
+            }
+
+            sidebarItems.forEach(item => {
+                item.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const pageTarget = item.dataset.page;
+                    if (pageTarget) {
+                        showPage(pageTarget);
+                        setActiveSidebarItem(item);
+                        if(pageTarget === 'dashboard') checkOverdueTasks(); // Re-check if navigating to dashboard
+                    }
+                });
+            });
+
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    alert('You have been logged out.');
+                    setActiveSidebarItem(null); 
+                });
+            }
+            
+            const initialActiveItem = sidebarNav.querySelector('.sidebar-item.active');
+            if (initialActiveItem) {
+                 const initialPage = initialActiveItem.dataset.page;
+                 if (initialPage) {
+                    showPage(initialPage); 
+                 }
+            }
+
+            // --- Populate Employees Table (Main Employee Page & Schedule Filter) ---
+            const employeesTableBodyMain = document.getElementById('employees-table-body-main');
+            const employeeSearchInputMain = document.getElementById('employee-search-main');
+            const tillEmployeeSelect = document.getElementById('till-employee');
+            const scheduleEmployeeFilter = document.getElementById('schedule-employee-filter');
+
+
+            function populateEmployeesTable(tableBodyElement, employeesToDisplay = employeesData) {
+                if (!tableBodyElement) return;
+                tableBodyElement.innerHTML = ''; 
+                employeesToDisplay.forEach(emp => {
+                    const row = tableBodyElement.insertRow();
+                    row.innerHTML = `
+                        <td class="font-medium">${emp.name}</td>
+                        <td>${emp.role}</td>
+                        <td>${emp.email}</td>
+                        <td><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${emp.status === 'Full-Time' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}">${emp.status}</span></td>
+                        <td>${emp.hoursThisPeriod}</td>
+                        <td>${emp.maxHours}</td>
+                        <td><button onclick="alert('Editing ${emp.name}')" class="text-blue-600 hover:text-blue-800 text-sm font-medium">Edit</button></td>
+                    `;
+                });
+                if (employeesToDisplay.length === 0) {
+                     tableBodyElement.innerHTML = `<tr><td colspan="7" class="text-center text-gray-500 py-4">No employees found.</td></tr>`;
+                }
+            }
+            
+            function populateEmployeeSelect(selectElement) {
+                if (!selectElement) return;
+                selectElement.innerHTML = `<option value="${selectElement.id === 'schedule-employee-filter' ? 'all' : ''}">${selectElement.id === 'schedule-employee-filter' ? 'All Employees' : 'Select Employee'}</option>`; 
+                employeesData.forEach(emp => {
+                    const option = document.createElement('option');
+                    option.value = emp.id; // Use ID for filter, name for till
+                    option.textContent = emp.name;
+                     if(selectElement.id === 'till-employee') option.value = emp.name;
+                    selectElement.appendChild(option);
+                });
+            }
+
+            if (employeeSearchInputMain) {
+                employeeSearchInputMain.addEventListener('keyup', (e) => {
+                    const searchTerm = e.target.value.toLowerCase();
+                    const filteredEmployees = employeesData.filter(emp => 
+                        emp.name.toLowerCase().includes(searchTerm) || 
+                        emp.role.toLowerCase().includes(searchTerm)
+                    );
+                    populateEmployeesTable(employeesTableBodyMain, filteredEmployees);
+                });
+            }
+            
+            populateEmployeesTable(employeesTableBodyMain); 
+            populateEmployeeSelect(tillEmployeeSelect);
+            populateEmployeeSelect(scheduleEmployeeFilter);
+
+            // --- Manager's Task List Logic ---
+            const addTaskForm = document.getElementById('add-task-form');
+            const taskListDiv = document.getElementById('manager-task-list');
+            const taskCountSpan = document.getElementById('task-count');
+            const filterTasksSelect = document.getElementById('filter-tasks');
+
+            function saveTasks() { localStorage.setItem('managerTasksAMC', JSON.stringify(managerTasks)); }
+            function loadTasks() {
+                const storedTasks = localStorage.getItem('managerTasksAMC');
+                if (storedTasks) managerTasks = JSON.parse(storedTasks);
+                renderTasks();
+            }
+            function isTaskOverdue(task) {
+                if (task.completed || !task.dueDate) return false;
+                const today = new Date(); today.setHours(0,0,0,0); 
+                const dueDate = new Date(task.dueDate);
+                const userTimezoneOffset = dueDate.getTimezoneOffset() * 60000;
+                const localDueDate = new Date(dueDate.getTime() + userTimezoneOffset);
+                localDueDate.setHours(0,0,0,0);
+                return localDueDate < today;
+            }
+            function renderTasks(filter = 'all') {
+                if (!taskListDiv || !taskCountSpan) return;
+                taskListDiv.innerHTML = '';
+                let tasksToDisplay = managerTasks;
+                if (filter === 'pending') tasksToDisplay = managerTasks.filter(task => !task.completed);
+                else if (filter === 'completed') tasksToDisplay = managerTasks.filter(task => task.completed);
+                else if (filter === 'overdue') tasksToDisplay = managerTasks.filter(task => !task.completed && isTaskOverdue(task));
+
+                if (tasksToDisplay.length === 0) taskListDiv.innerHTML = `<p class="text-gray-500 text-xs italic">No tasks match.</p>`;
+                else {
+                    tasksToDisplay.sort((a,b) => new Date(a.dueDate || '9999-12-31') - new Date(b.dueDate || '9999-12-31')) 
+                                 .sort((a,b) => (a.completed === b.completed)? 0 : a.completed? 1 : -1); 
+                    tasksToDisplay.forEach(task => {
+                        const taskElement = document.createElement('div');
+                        taskElement.className = `task-item p-2.5 rounded-md shadow-sm bg-white flex justify-between items-center priority-${task.priority} text-xs`;
+                        if (task.completed) taskElement.classList.add('completed');
+                        else if (isTaskOverdue(task)) taskElement.classList.add('overdue');
+                        const dueDateFormatted = task.dueDate ? new Date(task.dueDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'No Due';
+                        taskElement.innerHTML = `
+                            <div class="flex-grow mr-2">
+                                <p class="task-description font-medium text-gray-800">${task.description}</p>
+                                <p class="text-gray-500">Due: ${dueDateFormatted} (${task.priority})</span></p>
+                            </div>
+                            <div class="task-actions space-x-1 flex-shrink-0">
+                                <button data-id="${task.id}" class="toggle-complete-btn ${task.completed ? 'bg-yellow-400 hover:bg-yellow-500' : 'bg-green-400 hover:bg-green-500'} text-white px-1.5 py-0.5 rounded">
+                                    ${task.completed ? 'Undo' : 'Done'}
+                                </button>
+                                <button data-id="${task.id}" class="delete-task-btn bg-red-400 hover:bg-red-500 text-white px-1.5 py-0.5 rounded">Del</button>
+                            </div>`;
+                        taskListDiv.appendChild(taskElement);
+                    });
+                }
+                taskCountSpan.textContent = managerTasks.filter(t => !t.completed).length; 
+            }
+            if (addTaskForm) {
+                addTaskForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    const d = document.getElementById('task-description'), due = document.getElementById('task-due-date'), p = document.getElementById('task-priority');
+                    if (d.value.trim() === '') { alert('Task description cannot be empty.'); return; }
+                    managerTasks.push({ id: Date.now(), description: d.value.trim(), dueDate: due.value, priority: p.value, completed: false });
+                    saveTasks(); renderTasks(filterTasksSelect ? filterTasksSelect.value : 'all'); d.value = ''; due.value = '';
+                });
+            }
+            if (taskListDiv) {
+                taskListDiv.addEventListener('click', (e) => {
+                    const btn = e.target.closest('button');
+                    if (!btn) return;
+                    const taskId = parseInt(btn.dataset.id);
+                    if (btn.classList.contains('toggle-complete-btn')) {
+                        const task = managerTasks.find(t => t.id === taskId);
+                        if (task) { task.completed = !task.completed; saveTasks(); renderTasks(filterTasksSelect.value); }
+                    } else if (btn.classList.contains('delete-task-btn')) {
+                        if (confirm("Delete this task?")) { managerTasks = managerTasks.filter(t => t.id !== taskId); saveTasks(); renderTasks(filterTasksSelect.value); }
+                    }
+                });
+            }
+            if (filterTasksSelect) filterTasksSelect.addEventListener('change', (e) => renderTasks(e.target.value));
+            function checkOverdueTasks() {
+                const overdue = managerTasks.filter(task => !task.completed && isTaskOverdue(task));
+                if (overdue.length > 0 && pageContents.dashboard.classList.contains('active-page')) {
+                    const reminder = document.createElement('div');
+                    reminder.className = 'fixed bottom-4 right-4 bg-red-500 text-white p-3 rounded-lg shadow-lg text-sm z-50'; // Ensure high z-index
+                    reminder.textContent = `Reminder: You have ${overdue.length} overdue task(s)!`;
+                    document.body.appendChild(reminder);
+                    setTimeout(() => reminder.remove(), 7000);
+                }
+            }
+            loadTasks(); 
+
+            // --- Inventory Page Logic ---
+            const inventoryTableBody = document.getElementById('inventory-table-body');
+            const inventorySearchInput = document.getElementById('inventory-search');
+            const lowStockCountEl = document.getElementById('low-stock-count');
+            const totalInventoryValueEl = document.getElementById('total-inventory-value'); // Example placeholder
+
+            function renderInventoryTable(itemsToDisplay = inventoryData) {
+                if (!inventoryTableBody) return;
+                inventoryTableBody.innerHTML = '';
+                let lowStockItems = 0;
+                let totalValue = 0; // Placeholder for value calculation
+
+                itemsToDisplay.forEach(item => {
+                    const isLowStock = item.stock <= item.reorder;
+                    if (isLowStock) lowStockItems++;
+                    // totalValue += item.stock * (item.cost_price || 0); // Assuming cost_price property
+
+                    const row = inventoryTableBody.insertRow();
+                    row.className = isLowStock ? 'inventory-low-stock' : '';
+                    row.innerHTML = `
+                        <td class="font-medium">${item.name}</td>
+                        <td>${item.category}</td>
+                        <td class="text-right">${item.stock}</td>
+                        <td>${item.unit}</td>
+                        <td class="text-right">${item.reorder}</td>
+                        <td>${item.supplier}</td>
+                        <td class="text-xs space-x-1">
+                            <button onclick="alert('Editing ${item.name}')" class="px-1.5 py-0.5 bg-blue-500 text-white rounded hover:bg-blue-600">Edit</button>
+                            <button onclick="alert('Ordering more ${item.name}')" class="px-1.5 py-0.5 bg-green-500 text-white rounded hover:bg-green-600">Order</button>
+                            <button onclick="alert('Adjusting stock for ${item.name}')" class="px-1.5 py-0.5 bg-yellow-500 text-white rounded hover:bg-yellow-600">Adjust</button>
+                        </td>
+                    `;
+                });
+                if (itemsToDisplay.length === 0) {
+                     inventoryTableBody.innerHTML = `<tr><td colspan="7" class="text-center text-gray-500 py-4">No inventory items found.</td></tr>`;
+                }
+                if(lowStockCountEl) lowStockCountEl.textContent = lowStockItems;
+                // if(totalInventoryValueEl) totalInventoryValueEl.textContent = `$${totalValue.toFixed(2)}`;
+            }
+            renderInventoryTable(); // Initial population
+
+            if(inventorySearchInput) {
+                inventorySearchInput.addEventListener('input', (e) => {
+                    const searchTerm = e.target.value.toLowerCase();
+                    const currentCategory = document.querySelector('#page-inventory .border.rounded-md.bg-gray-50')?.dataset.category || 'all';
+                    filterInventory(searchTerm, currentCategory);
+                });
+            }
+            document.querySelectorAll('#page-inventory [data-category]').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    document.querySelectorAll('#page-inventory [data-category]').forEach(btn => btn.classList.remove('bg-gray-50', 'font-semibold'));
+                    e.target.classList.add('bg-gray-50', 'font-semibold');
+                    const category = e.target.dataset.category;
+                    const searchTerm = inventorySearchInput ? inventorySearchInput.value.toLowerCase() : '';
+                    filterInventory(searchTerm, category);
+                });
+            });
+            function filterInventory(searchTerm, category) {
+                 const filtered = inventoryData.filter(item => {
+                    const matchesSearch = item.name.toLowerCase().includes(searchTerm) || item.category.toLowerCase().includes(searchTerm) || item.supplier.toLowerCase().includes(searchTerm);
+                    const matchesCategory = category === 'all' || item.category === category;
+                    return matchesSearch && matchesCategory;
+                });
+                renderInventoryTable(filtered);
+            }
+
+
+            // --- Calculations Page Logic (Cash Denominations & Safe Bag Slip) ---
+            const tillCalculationForm = document.getElementById('till-calculation-form');
+            const tillResultDiv = document.getElementById('till-result');
+            const recentTillsTableBody = document.getElementById('recent-tills-body');
+            const denominationCounterDiv = document.getElementById('denomination-counter');
+            const totalCashCountedDisplay = document.getElementById('total-cash-counted-display');
+            const totalCashCountedValueInput = document.getElementById('total-cash-counted-value');
+            const safeBagSlipModal = document.getElementById('safe-bag-slip-modal');
+            const closeSlipModalBtn = document.getElementById('close-slip-modal-btn');
+            const printSlipBtn = document.getElementById('print-slip-btn');
+            const addManualSafeBagBtn = document.getElementById('add-manual-safe-bag-btn');
+            const safeBagsTableBody = document.getElementById('safe-bags-table-body');
+            
+            function populateDenominationCounter() {
+                if (!denominationCounterDiv) return;
+                denominationCounterDiv.innerHTML = '';
+                denominations.forEach(d => {
+                    const div = document.createElement('div');
+                    div.className = 'flex items-center justify-between';
+                    div.innerHTML = `
+                        <label for="denom-${d.value.toString().replace('.', '')}" class="form-label mr-2 whitespace-nowrap">${d.label}:</label>
+                        <input type="number" id="denom-${d.value.toString().replace('.', '')}" data-value="${d.value}" class="form-input denomination-input denom-count" min="0" value="0">
+                    `;
+                    denominationCounterDiv.appendChild(div);
+                });
+                denominationCounterDiv.addEventListener('input', updateTotalCashCounted);
+            }
+            populateDenominationCounter();
+
+            function updateTotalCashCounted() {
+                let total = 0;
+                document.querySelectorAll('.denom-count').forEach(input => {
+                    const count = parseInt(input.value) || 0;
+                    const value = parseFloat(input.dataset.value);
+                    total += count * value;
+                });
+                if (totalCashCountedDisplay) totalCashCountedDisplay.textContent = `$${total.toFixed(2)}`;
+                if (totalCashCountedValueInput) totalCashCountedValueInput.value = total.toFixed(2);
+            }
+
+            if (tillCalculationForm) {
+                tillCalculationForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    const employee = document.getElementById('till-employee').value;
+                    const startingCash = parseFloat(document.getElementById('starting-cash').value) || 0;
+                    const systemExpectedCash = parseFloat(document.getElementById('system-expected-cash').value) || 0;
+                    const cashCounted = parseFloat(totalCashCountedValueInput.value) || 0;
+                    const vouchersAccepted = parseFloat(document.getElementById('vouchers-accepted').value) || 0;
+                    const cashRefunds = parseFloat(document.getElementById('cash-refunds').value) || 0;
+                    const refundReasons = document.getElementById('refund-reasons').value;
+
+                    if (!employee) { alert("Please select an employee."); return; }
+                    if (cashCounted <=0 && systemExpectedCash > 0) if(!confirm("Cash counted is $0.00. Is this correct?")) return;
+
+                    const expectedCashInTillAfterSales = startingCash + systemExpectedCash;
+                    const expectedCashForDeposit = expectedCashInTillAfterSales - vouchersAccepted - cashRefunds;
+                    const difference = cashCounted - expectedCashForDeposit;
+                    const amountForSafeBag = cashCounted - startingCash;
+
+                    let resultMessage = `<strong class="block text-md mb-2">Till Reconciliation for ${employee}:</strong>`;
+                    resultMessage += `<p>Starting Cash: $${startingCash.toFixed(2)}</p>`;
+                    resultMessage += `<p>System Expected Net Cash Sales (POS): $${systemExpectedCash.toFixed(2)}</p>`;
+                    resultMessage += `<p class="italic">Subtotal (Expected before adjustments): $${expectedCashInTillAfterSales.toFixed(2)}</p>`;
+                    resultMessage += `<p>Vouchers Accepted: -$${vouchersAccepted.toFixed(2)}</p>`;
+                    resultMessage += `<p>Cash Refunds/Cancellations: -$${cashRefunds.toFixed(2)}</p>`;
+                    resultMessage += `<p><strong>Expected Cash for Deposit: $${expectedCashForDeposit.toFixed(2)}</strong></p><hr class="my-2">`;
+                    resultMessage += `<p><strong>Actual Cash Counted: $${cashCounted.toFixed(2)}</strong></p>`;
+                    let diffClass = difference > 0 ? 'border-green-300 bg-green-50' : difference < 0 ? 'border-red-300 bg-red-50' : 'border-blue-300 bg-blue-50';
+                    let statusText = difference > 0 ? `<strong class="text-green-600">OVER by $${difference.toFixed(2)}</strong>` : difference < 0 ? `<strong class="text-red-600">SHORT by $${Math.abs(difference).toFixed(2)}</strong>` : `<strong class="text-blue-600">Balanced</strong>`;
+                    resultMessage += `<p class="mt-1">Status: ${statusText}</p><hr class="my-2">`;
+                    resultMessage += `<p><strong>Amount for Safe Bag Deposit: $${amountForSafeBag.toFixed(2)}</strong></p>`;
+                    if(tillResultDiv) { tillResultDiv.innerHTML = resultMessage; tillResultDiv.className = `mt-6 p-4 rounded-md text-sm border ${diffClass}`; }
+                    
+                    const newTillRecord = { id: Date.now(), date: new Date().toLocaleDateString(), employee: employee, expected: expectedCashForDeposit.toFixed(2), counted: cashCounted.toFixed(2), difference: difference.toFixed(2), diffClass: diffClass, bagAmount: amountForSafeBag.toFixed(2) };
+                    recentTillsData.unshift(newTillRecord); localStorage.setItem('recentTillsAMC', JSON.stringify(recentTillsData)); renderRecentTills();
+                    
+                    if (amountForSafeBag > 0) {
+                        const bagNumber = `SB${String(Date.now()).slice(-6)}`;
+                        showSafeBagSlipModal(newTillRecord, bagNumber, refundReasons);
+                        safeBagsData.unshift({ id: Date.now() + 1, date: new Date().toLocaleDateString(), time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), employee: employee, bagNumber: bagNumber, amount: amountForSafeBag.toFixed(2), witness: "N/A (Pending)", status: "Prepared" });
+                        localStorage.setItem('safeBagsAMC', JSON.stringify(safeBagsData)); renderSafeBagsTable();
+                    } else alert("No amount for safe bag deposit based on calculation.");
+                });
+            }
+            function renderRecentTills() {
+                if (!recentTillsTableBody) return;
+                recentTillsTableBody.innerHTML = '';
+                if (recentTillsData.length === 0) { recentTillsTableBody.innerHTML = `<tr><td colspan="5" class="text-center text-gray-500 py-4">No reconciliations recorded.</td></tr>`; return; }
+                recentTillsData.slice(0, 5).forEach(till => { 
+                    const row = recentTillsTableBody.insertRow();
+                    row.innerHTML = `<td>${till.date}</td><td>${till.employee}</td><td>$${till.expected}</td><td>$${till.counted}</td><td class="${till.diffClass.split(' ')[1]}">${parseFloat(till.difference) >= 0 ? '+' : ''}$${till.difference}</td>`;
+                });
+            }
+            renderRecentTills(); 
+
+            function showSafeBagSlipModal(tillRecord, bagNumber, refundReasonsStr) {
+                if (!safeBagSlipModal) return;
+                document.getElementById('slip-date').textContent = new Date().toLocaleDateString();
+                document.getElementById('slip-time').textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                document.getElementById('slip-employee-name').textContent = tillRecord.employee;
+                document.getElementById('slip-bag-number').textContent = bagNumber;
+                const denominationsTableBody = safeBagSlipModal.querySelector('#slip-denominations-table tbody');
+                denominationsTableBody.innerHTML = ''; let slipTotalFromDenominations = 0;
+                document.querySelectorAll('.denom-count').forEach(input => {
+                    const count = parseInt(input.value) || 0;
+                    if (count > 0) {
+                        const value = parseFloat(input.dataset.value); const amount = count * value; slipTotalFromDenominations += amount;
+                        const row = denominationsTableBody.insertRow();
+                        row.innerHTML = `<td>${denominations.find(d => d.value === value).label}</td><td class="text-right">${count}</td><td class="text-right">$${amount.toFixed(2)}</td>`;
+                    }
+                });
+                const totalRow = denominationsTableBody.insertRow();
+                totalRow.innerHTML = `<td colspan="2" class="font-bold text-right pt-2 border-t-2 border-gray-600">Total Cash Counted in Bag:</td><td class="font-bold text-right pt-2 border-t-2 border-gray-600">$${slipTotalFromDenominations.toFixed(2)}</td>`;
+                document.getElementById('slip-total-amount').textContent = `$${tillRecord.bagAmount}`;
+                const refundNotesEl = document.getElementById('slip-refund-notes');
+                refundNotesEl.innerHTML = ''; // Clear previous
+                if(refundReasonsStr && refundReasonsStr.trim() !== ""){
+                    refundNotesEl.innerHTML = `<p class="font-semibold">Refund/Cancellation Notes:</p><p>${refundReasonsStr.replace(/\n/g, '<br>')}</p>`;
+                }
+                safeBagSlipModal.classList.add('visible');
+            }
+            if(closeSlipModalBtn) closeSlipModalBtn.addEventListener('click', () => {
+                safeBagSlipModal.classList.remove('visible');
+                if(tillCalculationForm) tillCalculationForm.reset(); populateDenominationCounter(); updateTotalCashCounted();
+                if(tillResultDiv) tillResultDiv.innerHTML = '';
+            });
+            if(printSlipBtn) printSlipBtn.addEventListener('click', () => window.print());
+            if (addManualSafeBagBtn) {
+                addManualSafeBagBtn.addEventListener('click', () => {
+                    const bn = prompt("Safe Bag Number:", `SB${String(Date.now()).slice(-5)}`); if (!bn) return;
+                    const am = prompt("Amount ($):"); if (!am) return; const amt = parseFloat(am); if (isNaN(amt)) { alert("Invalid amount."); return; }
+                    const ed = prompt("Employee Dropping:"); if (!ed) return;
+                    const w = prompt("Witness Name:"); if (!w) { alert("Witness required."); return; }
+                    const now = new Date();
+                    safeBagsData.unshift({ id: Date.now(), date: now.toLocaleDateString(), time: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), employee: ed, bagNumber: bn, amount: amt.toFixed(2), witness: w, status: "Logged Manually" });
+                    localStorage.setItem('safeBagsAMC', JSON.stringify(safeBagsData)); renderSafeBagsTable();
+                });
+            }
+            function renderSafeBagsTable() {
+                 if (!safeBagsTableBody) return;
+                safeBagsTableBody.innerHTML = '';
+                if (safeBagsData.length === 0) { safeBagsTableBody.innerHTML = `<tr><td colspan="7" class="text-center text-gray-500 py-4">No safe bag drops recorded.</td></tr>`; return; }
+                safeBagsData.slice(0,10).forEach(bag => { 
+                    const row = safeBagsTableBody.insertRow();
+                    row.innerHTML = `<td>${bag.date}</td><td>${bag.time}</td><td>${bag.employee}</td><td>${bag.bagNumber}</td><td class="text-right">$${bag.amount}</td><td>${bag.witness}</td><td><span class="px-2 py-1 text-xs font-semibold rounded-full ${bag.status === 'Prepared' ? 'bg-yellow-100 text-yellow-800' : 'bg-blue-100 text-blue-800'}">${bag.status}</span></td>`;
+                });
+            }
+            renderSafeBagsTable(); 
+
+            // --- Schedule Page - More Detailed Structure ---
+            const fullScheduleTableHead = document.querySelector('#full-schedule-table thead tr');
+            const fullScheduleTableBody = document.getElementById('full-schedule-body');
+            const schedulePageDateRangeEl = document.getElementById('schedule-page-date-range');
+            let currentSchedulePageDate = new Date(2024, 5, 9); // June 9, 2024 (Month is 0-indexed)
+            const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+
+            function renderFullSchedule(filterEmployeeId = 'all') {
+                if (!fullScheduleTableHead || !fullScheduleTableBody || !schedulePageDateRangeEl) return;
+
+                const startDate = new Date(currentSchedulePageDate);
+                const endDate = new Date(startDate);
+                endDate.setDate(startDate.getDate() + 6);
+                schedulePageDateRangeEl.textContent = `${startDate.toLocaleDateString('en-US', {month:'short', day:'numeric'})} - ${endDate.toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'})}`;
+
+                // Populate Headers
+                fullScheduleTableHead.innerHTML = '<th class="sticky left-0 bg-gray-50 z-10 w-40 py-2 px-3">Employee / Role</th>'; // Reset and add first th
+                for (let i = 0; i < 7; i++) {
+                    const day = new Date(startDate);
+                    day.setDate(startDate.getDate() + i);
+                    const th = document.createElement('th');
+                    th.className = 'px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider schedule-table-cell';
+                    th.innerHTML = `${daysOfWeek[day.getDay()]} <span class="block text-gray-400 normal-case">${day.getDate()}</span>`;
+                    fullScheduleTableHead.appendChild(th);
+                }
+
+                // Populate Body
+                fullScheduleTableBody.innerHTML = '';
+                const employeesToSchedule = filterEmployeeId === 'all' ? employeesData : employeesData.filter(e => e.id == filterEmployeeId);
+
+                if (employeesToSchedule.length === 0) {
+                    fullScheduleTableBody.innerHTML = `<tr><td colspan="8" class="text-center py-10">No employees match filter.</td></tr>`;
+                    return;
+                }
+
+                employeesToSchedule.forEach(emp => {
+                    const row = fullScheduleTableBody.insertRow();
+                    const empCell = row.insertCell();
+                    empCell.className = 'sticky left-0 bg-white z-10 whitespace-nowrap schedule-table-cell';
+                    empCell.innerHTML = `<div class="font-medium text-gray-900">${emp.name}</div><div class="text-xs text-gray-500">${emp.role}</div>`;
+
+                    for (let i = 0; i < 7; i++) {
+                        const dayCell = row.insertCell();
+                        dayCell.className = 'schedule-table-cell border-l';
+                        // Placeholder for shifts - In a real app, this would come from shift data
+                        if (emp.name.includes("Alice") && i < 3) { // Example shift
+                            dayCell.innerHTML += `<div class="schedule-shift" onclick="alert('Edit shift for Alice')">09:00 - 17:00<br><span class="text-blue-700">Serving</span></div>`;
+                        }
+                         if (emp.name.includes("Robert") && i > 2 && i < 6) { 
+                            dayCell.innerHTML += `<div class="schedule-shift bg-green-100 border-green-300" onclick="alert('Edit shift for Robert')">17:00 - CLOSE<br><span class="text-green-700">Bar</span></div>`;
+                        }
+                        // Add more placeholder logic or integrate actual shift data
+                    }
+                });
+            }
+            renderFullSchedule();
+            if(scheduleEmployeeFilter) scheduleEmployeeFilter.addEventListener('change', (e) => renderFullSchedule(e.target.value));
+            document.getElementById('schedule-prev-week')?.addEventListener('click', () => {
+                currentSchedulePageDate.setDate(currentSchedulePageDate.getDate() - 7);
+                renderFullSchedule(scheduleEmployeeFilter.value);
+            });
+            document.getElementById('schedule-next-week')?.addEventListener('click', () => {
+                currentSchedulePageDate.setDate(currentSchedulePageDate.getDate() + 7);
+                renderFullSchedule(scheduleEmployeeFilter.value);
+            });
+
+
+            // --- Dashboard Small Calendar Sync & Other Dashboard Interactivity ---
+            const scheduleDateRangeSmEl = document.getElementById('schedule-date-range-sm');
+            const calendarGridSm = document.getElementById('calendar-grid-sm');
+            function updateDashboardCalendar() { // Syncs with main schedule page date
+                if (!scheduleDateRangeSmEl || !calendarGridSm) return;
+                const startDate = new Date(currentSchedulePageDate);
+                const endDate = new Date(startDate);
+                endDate.setDate(startDate.getDate() + 6);
+                scheduleDateRangeSmEl.textContent = `${startDate.toLocaleDateString('en-US', {month:'short', day:'numeric'})} - ${endDate.toLocaleDateString('en-US', {month:'short', day:'numeric'})}`;
+                
+                const dayElements = calendarGridSm.querySelectorAll('.h-10'); // Target small calendar day boxes
+                dayElements.forEach((dayEl, index) => {
+                     if (index < 7) { 
+                        const dayDate = new Date(startDate);
+                        dayDate.setDate(startDate.getDate() + index);
+                        dayEl.textContent = dayDate.getDate();
+                        dayEl.className = 'bg-gray-100 rounded h-10 p-1 text-left text-xs font-bold text-gray-600'; // Reset
+                        const highlightDate = new Date(2024, 5, 14); // Example highlight
+                        if (dayDate.getTime() === highlightDate.getTime()) {
+                             dayEl.classList.add('bg-blue-50', 'border', 'border-blue-400', 'text-blue-600');
+                        }
+                    }
+                });
+            }
+            updateDashboardCalendar(); // Initial call
+            document.getElementById('prev-week-btn-sm')?.addEventListener('click', () => {
+                currentSchedulePageDate.setDate(currentSchedulePageDate.getDate() - 7);
+                updateDashboardCalendar(); renderFullSchedule(scheduleEmployeeFilter.value); // Also update main schedule
+            });
+            document.getElementById('next-week-btn-sm')?.addEventListener('click', () => {
+                currentSchedulePageDate.setDate(currentSchedulePageDate.getDate() + 7);
+                updateDashboardCalendar(); renderFullSchedule(scheduleEmployeeFilter.value);
+            });
+
+            // Dashboard AI Insights (simplified for space)
+            document.getElementById('approve-timeoff-btn-sm')?.addEventListener('click', () => document.getElementById('timeoff-content-sm').innerHTML = `<p class="text-xs text-green-700 font-semibold">Approved!</p>`);
+            document.getElementById('deny-timeoff-btn-sm')?.addEventListener('click', () => document.getElementById('timeoff-content-sm').innerHTML = `<p class="text-xs text-red-700 font-semibold">Denied.</p>`);
+
+
+            // --- Rest of the Dashboard Interactivity (as before, checking for element existence) ---
+            const suggestEmployeeBtn = document.getElementById('suggest-employee-btn');
+            if(suggestEmployeeBtn) suggestEmployeeBtn.addEventListener('click', () => alert('AI Suggestion: Laura M. is available and skilled for Friday dinner.'));
+            const findReplacementBtn = document.getElementById('find-replacement-btn');
+            if(findReplacementBtn) findReplacementBtn.addEventListener('click', () => alert('AI Suggestion: Mark P. can cover Anna S.\'s shift. Availability confirmed.'));
+            const planSpecialBtn = document.getElementById('plan-special-btn');
+            if(planSpecialBtn) planSpecialBtn.addEventListener('click', () => alert('Opening AI assistant to plan Quick Lunch Special based on flight arrivals...'));
+            const createScheduleBtn = document.getElementById('create-schedule-btn');
+            if(createScheduleBtn) createScheduleBtn.addEventListener('click', () => {
+                showPage('schedule');
+                setActiveSidebarItem(sidebarNav.querySelector('[data-page="schedule"]'));
+            });
+
+            // Announcement Modal
+            const draftButton = document.getElementById('draft-announcement-btn');
+            const modal = document.getElementById('announcement-modal');
+            const closeModalButton = document.getElementById('close-modal-btn');
+            const announcementTextarea = document.getElementById('announcement-text');
+            const copyTextBtn = document.getElementById('copy-text-btn');
+            const sendToTeamBtn = document.getElementById('send-to-team-btn');
+            const generateAnnouncement = async () => { /* ... Gemini API call ... */ 
+                if (!announcementTextarea) return;
+                announcementTextarea.value = '✨ Generating a team announcement...';
+                announcementTextarea.disabled = true;
+                const prompt = "Act as a restaurant manager. Write a friendly and professional message to the team about 3 open shifts that need coverage. The shifts are: one server shift on Friday evening, one bartender shift on Saturday evening, and one host shift on Sunday morning. Encourage them to reply if they are interested. Be concise but warm.";
+                let chatHistory = [{ role: "user", parts: [{ text: prompt }] }];
+                const payload = { contents: chatHistory };
+                const apiKey = "YOUR_GEMINI_API_KEY_HERE"; 
+                if (apiKey === "YOUR_GEMINI_API_KEY_HERE") {
+                    announcementTextarea.value = "ERROR: Please replace 'YOUR_GEMINI_API_KEY_HERE' in the script with your actual Gemini API Key.";
+                    announcementTextarea.disabled = false; console.error("Gemini API Key is missing."); return;
+                }
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
+                try {
+                    const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                    if (!response.ok) { const errorData = await response.json(); throw new Error(`API call failed: ${response.status}. ${errorData.error?.message || ''}`); }
+                    const result = await response.json();
+                    if (result.candidates?.[0]?.content?.parts?.[0]?.text) announcementTextarea.value = result.candidates[0].content.parts[0].text;
+                    else announcementTextarea.value = "Sorry, couldn't generate an announcement.";
+                } catch (error) { console.error("Error calling Gemini API:", error); announcementTextarea.value = `Error: ${error.message}.`;
+                } finally { announcementTextarea.disabled = false; }
+            };
+            if (draftButton) draftButton.addEventListener('click', () => { if(modal) modal.classList.add('visible'); generateAnnouncement(); });
+            if (closeModalButton) closeModalButton.addEventListener('click', () => { if(modal) modal.classList.remove('visible'); });
+            if (modal) modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('visible'); });
+            if (copyTextBtn && announcementTextarea) copyTextBtn.addEventListener('click', () => { announcementTextarea.select(); navigator.clipboard.writeText(announcementTextarea.value).then(() => alert('Copied!')).catch(err => console.error('Copy failed: ', err)); });
+            if (sendToTeamBtn) sendToTeamBtn.addEventListener('click', () => { alert('Announcement "sent"!'); if(modal) modal.classList.remove('visible'); });
+        
+        }); // END DOMContentLoaded
+    </script>
+</body>
+</html>
+
+```
